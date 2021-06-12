@@ -1,7 +1,22 @@
+// vORn25QzQuSg3uFj
+//157.34.70.160
+//157.34.70.160/32
 const express  = require("express");
 const bodyParser = require("body-parser");
+const Post = require('./models/post');
+const mongoose = require('mongoose');
 
 const app = express();
+
+mongoose.connect("mongodb+srv://naresh:vORn25QzQuSg3uFj@cluster0.fj5bb.mongodb.net/node-angular?retryWrites=true&w=majority",
+{ useNewUrlParser: true, useUnifiedTopology: true })
+.then(() => {
+  console.log('Connected to database!');
+})
+.catch((error) => {
+  console.log(error);
+  console.log('Connection failed')
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -19,35 +34,38 @@ app.use((req, res, next) => {
 });
 
 app.post("/api/posts", (req, res, next) => {
-  const post = req.body;
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.content
+  });
   console.log(post);
-  res.status(201).json({
-    message: 'post Added Successfully'
+  post.save().then(createdPost => {
+    res.status(201).json({
+      message: 'post Added Successfully',
+      postId: createdPost._id
+    });
   });
 });
 
 app.get('/api/posts', (req, res, next) => {
-  posts = [
-    {
-      id:'cedchedc3j',
-      title:'First Server-side post',
-      content: 'First is coming from the serve'
-    },
-    {
-      id:'ry754yt58',
-      title:'Second Server-side post',
-      content: 'Second is coming from the serve'
-    },
-    {
-      id:'nhtn8t5thng',
-      title:'Third Server-side post',
-      content: 'Third is coming from the serve'
-    },
+  Post.find().then(documents => {
+    console.log(documents);
+    res.status(200).json({
+      message: 'Posts fetched succesfully',
+      posts: documents
+    });
+  });
+});
 
-  ];
-  res.status(200).json({
-    message: 'Posts fetched succesfully',
-    posts: posts
+// app.delete("/api/posts:id", (req, res, next) => {
+//  console.log(req.params.id);
+//   res.status(200).json({message: 'Post Deleted!'});
+// });
+
+app.delete("/api/posts/:id", (req, res, next) => {
+  Post.deleteOne({ _id: req.params.id }).then(result => {
+    console.log(result);
+    res.status(200).json({ message: "Post deleted!" });
   });
 });
 
